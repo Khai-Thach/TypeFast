@@ -17,13 +17,9 @@ words = ["APPROXIMATE", "TEMPERATURE", "SUPERFLUOUS",
          "METICULOUS", "NOSTALGIA", "OBLIVIOUS", 
          "PERSISTENT", "QUINTESSENTIAL"]
 
-currentWord = random.choice(words)
 font = pygame.font.Font(None, 50)
 speed = 5
-x = 0
-y = random.randint(50, 500)
-displayWord = font.render(currentWord, True, "white")
-wordSpawnTime = 2000
+wordSpawnTime = 2000 # This is in milliseconds, so 2000ms = 2 seconds
 lastWordSpawn = 0
 wordsOnScreen = []
 
@@ -36,9 +32,10 @@ active = False
 placeholderText = "Type fast before the word reaches the end!"
     
 
-
-while running:
-    currentTime = pygame.time.get_ticks()
+def eventHandler(wordsOnScreen, textBox, userText, active):
+    
+    running = True
+    
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
@@ -47,46 +44,69 @@ while running:
                 active = True
             else:
                 active = False
-        # Checks if the user typed the correct word
         if event.type == pygame.KEYDOWN and active:
             if event.key == pygame.K_BACKSPACE:
                 userText = userText[:-1]
+            # Checks if the user typed the correct word
             elif event.key == pygame.K_RETURN:
                 for word in wordsOnScreen:
                     if word["text"] == userText and word["color"] == "white":
                         word["color"] = "blue"
-                        word["currentTime"] = currentTime
                         break
                 userText = ""
             else:
                 userText += event.unicode.upper()
+    return running, userText, active
+    
 
+def drawTextBox(screen, textBox, userText, active, placeholderText):
 
-    screen.fill("black")
-
-    # Load textbox for user to type in
     pygame.draw.rect(screen, "white", textBox, 2)
     if userText == "" and not active:
         boxText = textBoxFont.render(placeholderText, True, "grey")
     else:
         boxText = textBoxFont.render(userText, True, "white")
-    screen.blit(boxText, (textBox.x + 10, textBox.y + 15))
-    
-    # Spawning multiple words on the screen
-    if currentTime - lastWordSpawn >= wordSpawnTime:
-        newWord = random.choice(words)
-        newWordDisplay = font.render(newWord, True, "white")
-        wordsOnScreen.append({"text": newWord, 
-                              "display": newWordDisplay, 
-                              "x": 0, "y": random.randint(50, 500), 
-                              "color": "white"})
-        lastWordSpawn = currentTime
 
-    # Moving words across the screen
+    screen.blit(boxText, (textBox.x + 10, textBox.y + 15))
+
+def spawnWord(words, wordsOnScreen):
+
+    newWord = random.choice(words)
+    wordsOnScreen.append({"text": newWord, 
+                            "x": 0, "y": random.randint(50, 500), 
+                            "color": "white"})
+
+def moveWords(screenWidth, wordsOnScreen, speed):
+
     for word in list(wordsOnScreen):
         word["x"] += speed
-        wordDisplay = font.render(word["text"], True, word["color"])
-        screen.blit(wordDisplay, (word["x"], word["y"]))
+        if word["x"] >= screenWidth:
+            wordsOnScreen.remove(word)
+
+def drawWords(screen, wordsOnScreen, font):
+        
+        for word in wordsOnScreen:
+            wordDisplay = font.render(word["text"], True, word["color"])
+            screen.blit(wordDisplay, (word["x"], word["y"]))
+
+# Main game loop
+while running:
+
+    screen.fill("black")
+    currentTime = pygame.time.get_ticks() # Ticks are in milliseconds
+    
+    results = eventHandler(wordsOnScreen, textBox, userText, active)
+    running = results[0]
+    userText = results[1]
+    active = results[2]
+    
+    if currentTime - lastWordSpawn >= wordSpawnTime:
+        spawnWord(words, wordsOnScreen)
+        lastWordSpawn = currentTime
+
+    moveWords(screenWidth, wordsOnScreen, speed)
+    drawWords(screen, wordsOnScreen, font)
+    drawTextBox(screen, textBox, userText, active, placeholderText)
 
     pygame.display.flip()
     clock.tick(60)
