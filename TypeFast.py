@@ -35,7 +35,6 @@ playButton = pygame.Rect((screenWidth - 200) // 2, (screenHeight - 50) // 2, 200
 
 def drawMenu(screen, titleFont, font, playButton):
     screen.fill("black")
-    titleFont = pygame.font.Font(None, 100)
     titleText = titleFont.render("TypeFast", True, "white")
     titleRect = titleText.get_rect(center=(screenWidth // 2, 200))
     screen.blit(titleText, titleRect)
@@ -208,6 +207,7 @@ while running:
                     wordsOnScreen.clear()
                     userText = ""
                     active = False
+                    score = 0
                     lastWordSpawn = currentTime
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if exitButton.collidepoint(event.pos):
@@ -215,6 +215,7 @@ while running:
                     wordsOnScreen.clear()
                     userText = ""
                     active = False
+                    score = 0
                     lastWordSpawn = currentTime
                     
 
