@@ -10,6 +10,12 @@ screen = pygame.display.set_mode((screenWidth, screenHeight))
 clock = pygame.time.Clock()
 running = True
 
+gameState = "menu"
+
+playButton = pygame.Rect((screenWidth - 200) // 2, (screenHeight - 50) // 2, 200, 50)
+titleFont = pygame.font.Font(None, 100)
+buttonFont = pygame.font.Font(None, 50)
+
 words = ["APPROXIMATE", "TEMPERATURE", "SUPERFLUOUS", 
          "FAVORABLE", "DECISIVE", "CYCLICAL", 
          "HUMOROUS", "INCONSPICUOUS", "XYLOPHONE", 
@@ -31,6 +37,23 @@ userText = ""
 active = False
 placeholderText = "Type fast before the word reaches the end!"
     
+def drawMenu(screen, titleFont, buttonFont, playButton):
+    screen.fill("black")
+    titleFont = pygame.font.Font(None, 100)
+    titleText = titleFont.render("TypeFast", True, "white")
+    titleRect = titleText.get_rect(center=(screenWidth // 2, 200))
+    screen.blit(titleText, titleRect)
+
+    if playButton.collidepoint(pygame.mouse.get_pos()):
+        buttonColor = "white"
+    else:
+        buttonColor = "skyblue"
+
+    pygame.draw.rect(screen, buttonColor, playButton)
+
+    playText = buttonFont.render("Play", True, "black")
+    playTextRect = playText.get_rect(center=playButton.center)
+    screen.blit(playText, playTextRect)
 
 def eventHandler(wordsOnScreen, textBox, userText, active):
     
@@ -51,7 +74,7 @@ def eventHandler(wordsOnScreen, textBox, userText, active):
             elif event.key == pygame.K_RETURN:
                 for word in wordsOnScreen:
                     if word["text"] == userText and word["color"] == "white":
-                        word["color"] = "blue"
+                        word["color"] = "skyblue"
                         break
                 userText = ""
             else:
@@ -91,22 +114,34 @@ def drawWords(screen, wordsOnScreen, font):
 
 # Main game loop
 while running:
-
-    screen.fill("black")
+    
     currentTime = pygame.time.get_ticks() # Ticks are in milliseconds
-    
-    results = eventHandler(wordsOnScreen, textBox, userText, active)
-    running = results[0]
-    userText = results[1]
-    active = results[2]
-    
-    if currentTime - lastWordSpawn >= wordSpawnTime:
-        spawnWord(words, wordsOnScreen)
-        lastWordSpawn = currentTime
+    if gameState == "menu":
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if playButton.collidepoint(event.pos):
+                    gameState = "game"
 
-    moveWords(screenWidth, wordsOnScreen, speed)
-    drawWords(screen, wordsOnScreen, font)
-    drawTextBox(screen, textBox, userText, active, placeholderText)
+        drawMenu(screen, titleFont, buttonFont, playButton)
+    
+    elif gameState == "game":
+
+        results = eventHandler(wordsOnScreen, textBox, userText, active)
+        running = results[0]
+        userText = results[1]
+        active = results[2]
+        
+        if currentTime - lastWordSpawn >= wordSpawnTime:
+            spawnWord(words, wordsOnScreen)
+            lastWordSpawn = currentTime
+
+        screen.fill("black")
+        
+        moveWords(screenWidth, wordsOnScreen, speed)
+        drawWords(screen, wordsOnScreen, font)
+        drawTextBox(screen, textBox, userText, active, placeholderText)
 
     pygame.display.flip()
     clock.tick(60)
