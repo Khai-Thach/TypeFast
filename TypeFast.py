@@ -13,7 +13,7 @@ running = True
 active = False
 
 gameState = "menu"
-
+score = 0
 titleFont = pygame.font.Font(None, 100)
 font = pygame.font.Font(None, 50)
 
@@ -84,7 +84,12 @@ def drawGameOver(screen, titleFont, font, tryAgainButton, exitButton, wordsOnScr
     exitTextRect = exitText.get_rect(center=exitButton.center)
     screen.blit(exitText, exitTextRect)
 
-def eventHandler(wordsOnScreen, textBox, userText, active):
+def drawScore(screen, font, score):
+    scoreText = font.render("Score: " + str(score), True, "white")
+    scoreRect = scoreText.get_rect(topleft = (20, 20))
+    screen.blit(scoreText, scoreRect)
+
+def eventHandler(wordsOnScreen, textBox, userText, active, score):
     
     running = True
     
@@ -104,11 +109,12 @@ def eventHandler(wordsOnScreen, textBox, userText, active):
                 for word in wordsOnScreen:
                     if word["text"] == userText and word["color"] == "white":
                         word["color"] = "skyblue"
+                        score += 1
                         break
                 userText = ""
             else:
                 userText += event.unicode.upper()
-    return running, userText, active
+    return running, userText, active, score
     
 
 # User Textbox Setup
@@ -172,10 +178,11 @@ while running:
     
     elif gameState == "game":
 
-        results = eventHandler(wordsOnScreen, textBox, userText, active)
+        results = eventHandler(wordsOnScreen, textBox, userText, active, score)
         running = results[0]
         userText = results[1]
         active = results[2]
+        score = results[3]
         
         if currentTime - lastWordSpawn >= wordSpawnTime:
             spawnWord(words, wordsOnScreen)
@@ -188,6 +195,7 @@ while running:
             gameState = "gameover"
         drawWords(screen, wordsOnScreen, font)
         drawTextBox(screen, textBox, userText, active, placeholderText)
+        drawScore(screen, font, score)
 
     elif gameState == "gameover":
         for event in pygame.event.get():
