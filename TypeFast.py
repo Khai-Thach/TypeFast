@@ -8,7 +8,9 @@ screenWidth = 1280
 screenHeight = 720
 screen = pygame.display.set_mode((screenWidth, screenHeight))
 clock = pygame.time.Clock()
+
 running = True
+active = False
 
 gameState = "menu"
 
@@ -26,15 +28,6 @@ speed = 5
 wordSpawnTime = 2000 # This is in milliseconds, so 2000ms = 2 seconds
 lastWordSpawn = 0
 wordsOnScreen = []
-
-textBoxWidth = (screenWidth - 600) // 2
-textBoxHeight = screenHeight - 80
-textBox = pygame.Rect(textBoxWidth,textBoxHeight, 600, 50)
-textBoxFont = pygame.font.Font(None, 30)
-userText = ""
-active = False
-placeholderText = "Type fast before the word reaches the end!"
-
 
 # Menu Setup
 playButton = pygame.Rect((screenWidth - 200) // 2, (screenHeight - 50) // 2, 200, 50)
@@ -58,25 +51,35 @@ def drawMenu(screen, titleFont, font, playButton):
     screen.blit(playText, playTextRect)
 
 # Game Over Setup
+tryAgainButton = pygame.Rect((screenWidth - 200) // 2, (screenHeight - 50) // 2, 200, 50)
 
-tryAgainButton = pygame.Rect((screenWidth - 200) // 2, (screenHeight - 50) // 2 + 100, 200, 50)
+exitButton = pygame.Rect((screenWidth - 200) // 2, (screenHeight - 50) // 2 + 100, 200, 50)
 
-exitButton = pygame.Rect((screenWidth - 200) // 2, (screenHeight - 50) // 2 + 200, 200, 50)
+def drawGameOver(screen, titleFont, font, tryAgainButton, exitButton, wordsOnScreen):
 
-def drawGameOver(screen, titleFont, font, wordsOnScreen):
     screen.fill("black")
     drawWords(screen, wordsOnScreen, font)
 
     gameOverText = titleFont.render("Game Over", True, "white")
-    gameOverRect = gameOverText.get_rect(center=(screenWidth // 2, screenHeight // 2))
+    gameOverRect = gameOverText.get_rect(center=(screenWidth // 2, 200))
     screen.blit(gameOverText, gameOverRect)
 
-    pygame.draw.rect(screen, "white", tryAgainButton, border_radius = 10)
+    if tryAgainButton.collidepoint(pygame.mouse.get_pos()):
+            tryAgainColor = "white"
+    else:
+        tryAgainColor = "skyblue"
+
+    pygame.draw.rect(screen, tryAgainColor, tryAgainButton, border_radius = 10)
     tryAgainText = font.render("Try Again", True, "black")
     tryAgainTextRect = tryAgainText.get_rect(center=tryAgainButton.center)
     screen.blit(tryAgainText, tryAgainTextRect)
 
-    pygame.draw.rect(screen, "white", exitButton, border_radius = 10)
+    if exitButton.collidepoint(pygame.mouse.get_pos()):
+            exitColor = "white"
+    else:
+        exitColor = "skyblue"
+
+    pygame.draw.rect(screen, exitColor, exitButton, border_radius = 10)
     exitText = font.render("Exit", True, "black")
     exitTextRect = exitText.get_rect(center=exitButton.center)
     screen.blit(exitText, exitTextRect)
@@ -107,6 +110,14 @@ def eventHandler(wordsOnScreen, textBox, userText, active):
                 userText += event.unicode.upper()
     return running, userText, active
     
+
+# User Textbox Setup
+textBoxWidth = (screenWidth - 600) // 2
+textBoxHeight = screenHeight - 80
+textBox = pygame.Rect(textBoxWidth,textBoxHeight, 600, 50)
+textBoxFont = pygame.font.Font(None, 30)
+userText = ""
+placeholderText = "Type fast before the word reaches the end!"
 
 def drawTextBox(screen, textBox, userText, active, placeholderText):
 
@@ -198,7 +209,7 @@ while running:
                     lastWordSpawn = currentTime
                     
 
-        drawGameOver(screen, titleFont, font, wordsOnScreen)
+        drawGameOver(screen, titleFont, font, tryAgainButton, exitButton, wordsOnScreen)
 
     pygame.display.flip()
     clock.tick(60)
