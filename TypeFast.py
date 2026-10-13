@@ -12,9 +12,8 @@ running = True
 
 gameState = "menu"
 
-playButton = pygame.Rect((screenWidth - 200) // 2, (screenHeight - 50) // 2, 200, 50)
 titleFont = pygame.font.Font(None, 100)
-buttonFont = pygame.font.Font(None, 50)
+font = pygame.font.Font(None, 50)
 
 words = ["APPROXIMATE", "TEMPERATURE", "SUPERFLUOUS", 
          "FAVORABLE", "DECISIVE", "CYCLICAL", 
@@ -23,7 +22,6 @@ words = ["APPROXIMATE", "TEMPERATURE", "SUPERFLUOUS",
          "METICULOUS", "NOSTALGIA", "OBLIVIOUS", 
          "PERSISTENT", "QUINTESSENTIAL"]
 
-font = pygame.font.Font(None, 50)
 speed = 5
 wordSpawnTime = 2000 # This is in milliseconds, so 2000ms = 2 seconds
 lastWordSpawn = 0
@@ -36,8 +34,12 @@ textBoxFont = pygame.font.Font(None, 30)
 userText = ""
 active = False
 placeholderText = "Type fast before the word reaches the end!"
-    
-def drawMenu(screen, titleFont, buttonFont, playButton):
+
+
+# Menu Setup
+playButton = pygame.Rect((screenWidth - 200) // 2, (screenHeight - 50) // 2, 200, 50)
+
+def drawMenu(screen, titleFont, font, playButton):
     screen.fill("black")
     titleFont = pygame.font.Font(None, 100)
     titleText = titleFont.render("TypeFast", True, "white")
@@ -49,11 +51,35 @@ def drawMenu(screen, titleFont, buttonFont, playButton):
     else:
         buttonColor = "skyblue"
 
-    pygame.draw.rect(screen, buttonColor, playButton)
+    pygame.draw.rect(screen, buttonColor, playButton, border_radius = 10)
 
-    playText = buttonFont.render("Play", True, "black")
+    playText = font.render("Play", True, "black")
     playTextRect = playText.get_rect(center=playButton.center)
     screen.blit(playText, playTextRect)
+
+# Game Over Setup
+
+tryAgainButton = pygame.Rect((screenWidth - 200) // 2, (screenHeight - 50) // 2 + 100, 200, 50)
+
+exitButton = pygame.Rect((screenWidth - 200) // 2, (screenHeight - 50) // 2 + 200, 200, 50)
+
+def drawGameOver(screen, titleFont, font, wordsOnScreen):
+    screen.fill("black")
+    drawWords(screen, wordsOnScreen, font)
+
+    gameOverText = titleFont.render("Game Over", True, "white")
+    gameOverRect = gameOverText.get_rect(center=(screenWidth // 2, screenHeight // 2))
+    screen.blit(gameOverText, gameOverRect)
+
+    pygame.draw.rect(screen, "white", tryAgainButton, border_radius = 10)
+    tryAgainText = font.render("Try Again", True, "black")
+    tryAgainTextRect = tryAgainText.get_rect(center=tryAgainButton.center)
+    screen.blit(tryAgainText, tryAgainTextRect)
+
+    pygame.draw.rect(screen, "white", exitButton, border_radius = 10)
+    exitText = font.render("Exit", True, "black")
+    exitTextRect = exitText.get_rect(center=exitButton.center)
+    screen.blit(exitText, exitTextRect)
 
 def eventHandler(wordsOnScreen, textBox, userText, active):
     
@@ -84,7 +110,7 @@ def eventHandler(wordsOnScreen, textBox, userText, active):
 
 def drawTextBox(screen, textBox, userText, active, placeholderText):
 
-    pygame.draw.rect(screen, "white", textBox, 2)
+    pygame.draw.rect(screen, "white", textBox, 2, border_radius = 10)
     if userText == "" and not active:
         boxText = textBoxFont.render(placeholderText, True, "grey")
     else:
@@ -101,10 +127,15 @@ def spawnWord(words, wordsOnScreen):
 
 def moveWords(screenWidth, wordsOnScreen, speed):
 
-    for word in list(wordsOnScreen):
+    for word in wordsOnScreen:
         word["x"] += speed
-        if word["x"] >= screenWidth:
-            wordsOnScreen.remove(word)
+        wordWidth = font.size(word["text"])[0]
+
+        if word["x"]  + wordWidth >= screenWidth and word["color"] == "white":
+            word["color"] = "red"
+            return True
+    return False
+
 
 def drawWords(screen, wordsOnScreen, font):
         
@@ -116,6 +147,7 @@ def drawWords(screen, wordsOnScreen, font):
 while running:
     
     currentTime = pygame.time.get_ticks() # Ticks are in milliseconds
+    
     if gameState == "menu":
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -123,8 +155,9 @@ while running:
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if playButton.collidepoint(event.pos):
                     gameState = "game"
+                    lastWordSpawn = currentTime
 
-        drawMenu(screen, titleFont, buttonFont, playButton)
+        drawMenu(screen, titleFont, font, playButton)
     
     elif gameState == "game":
 
@@ -139,9 +172,33 @@ while running:
 
         screen.fill("black")
         
-        moveWords(screenWidth, wordsOnScreen, speed)
+        missedWord = moveWords(screenWidth, wordsOnScreen, speed)
+        if missedWord:
+            gameState = "gameover"
         drawWords(screen, wordsOnScreen, font)
         drawTextBox(screen, textBox, userText, active, placeholderText)
+
+    elif gameState == "gameover":
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if tryAgainButton.collidepoint(event.pos):
+                    gameState = "game"
+                    wordsOnScreen.clear()
+                    userText = ""
+                    active = False
+                    lastWordSpawn = currentTime
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if exitButton.collidepoint(event.pos):
+                    gameState = "menu"
+                    wordsOnScreen.clear()
+                    userText = ""
+                    active = False
+                    lastWordSpawn = currentTime
+                    
+
+        drawGameOver(screen, titleFont, font, wordsOnScreen)
 
     pygame.display.flip()
     clock.tick(60)
