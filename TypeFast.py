@@ -2,18 +2,19 @@ import pygame
 import random
 
 pygame.init()
+clock = pygame.time.Clock()
 pygame.key.set_repeat(400,50)
 
 screenWidth = 1280
 screenHeight = 720
 screen = pygame.display.set_mode((screenWidth, screenHeight))
-clock = pygame.time.Clock()
 
 running = True
 active = False
 
 gameState = "menu"
 score = 0
+
 titleFont = pygame.font.Font(None, 100)
 font = pygame.font.Font(None, 50)
 
